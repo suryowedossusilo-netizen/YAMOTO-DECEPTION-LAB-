@@ -20,9 +20,13 @@ jobs:
       - run: npm run build
       - run: pyinstaller --onefile --distpath engine/dist --name yamoto-engine engine/yamoto_engine.py
       - run: python -m pytest tests -q
+      - name: Generate Windows application icon
+        shell: pwsh
+        run: ./.github/scripts/create-windows-icon.ps1
       - name: Build installer
         run: npm run tauri -- build --bundles nsis
       - uses: actions/upload-artifact@v4
         with:
           name: yamoto-deception-lab-windows
           path: src-tauri/target/release/bundle/nsis/*.exe
+          if-no-files-found: error
