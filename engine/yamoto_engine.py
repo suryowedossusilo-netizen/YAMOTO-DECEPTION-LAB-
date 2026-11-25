@@ -116,6 +116,77 @@ def analyze_frame(q):
     return {"ok": True, "record_id": record_id, "features": features,
             "limitations": "Single-frame facial geometry cannot establish emotion, intent, honesty, or deception."}
 
+def analyze_video(q):
+    raw = _media_bytes(q.get("data"))
+    try:
+        import cv2
+        import mediapipe as mp
+        import numpy as np
+    except ImportError as exc:
+        raise RuntimeError("MediaPipe/OpenCV is not installed in this build.") from exc
+    import tempfile
+    temp_path = None
+    try:
+        with tempfile.NamedTemporaryFile(suffix=".video", delete=False) as temp:
+            temp.write(raw)
+            temp_path = temp.name
+        capture = cv2.VideoCapture(temp_path)
+        if not capture.isOpened():
+            raise ValueError("Could not open this video. Use a supported MP4, MOV, or AVI file.")
+        fps = float(capture.get(cv2.CAP_PROP_FPS) or 0)
+        total_frames = int(capture.get(cv2.CAP_PROP_FRAME_COUNT) or 0)
+        duration = total_frames / fps if fps > 0 else 0
+        if duration <= 0 or duration > 300:
+            raise ValueError("Video duration must be between 1 frame and 5 minutes.")
+        if total_frames > 90000:
+            raise ValueError("Video contains too many frames.")
+        sample_every = max(1, int(round(fps))) if fps > 0 else 1
+        samples = []
+        frame_index = 0
+        with mp.solutions.face_mesh.FaceMesh(
+            static_image_mode=False, max_num_faces=1, refine_landmarks=True,
+            min_detection_confidence=0.5, min_tracking_confidence=0.5
+        ) as mesh:
+            while True:
+                ok, frame = capture.read()
+                if not ok:
+                    break
+                if frame_index % sample_every == 0:
+                    h, w = frame.shape[:2]
+                    if w * h > 20_000_000:
+                        raise ValueError("A video frame exceeds the 20-megapixel limit.")
+                    result = mesh.process(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
+                    detected = bool(result.multi_face_landmarks)
+                    row = {"time_seconds": round(frame_index / fps, 3) if fps > 0 else frame_index,
+                           "face_detected": detected}
+                    if detected:
+                        pts = result.multi_face_landmarks[0].landmark
+                        def dist(a, b):
+                            return math.hypot(pts[a].x - pts[b].x, pts[a].y - pts[b].y)
+                        row["mouth_openness_geometry"] = round(dist(13, 14) / max(dist(78, 308), 1e-8), 5)
+                        row["left_eye_openness_geometry"] = round(((dist(160, 144) + dist(158, 153)) / 2) / max(dist(33, 133), 1e-8), 5)
+                        row["right_eye_openness_geometry"] = round(((dist(385, 380) + dist(387, 373)) / 2) / max(dist(362, 263), 1e-8), 5)
+                    samples.append(row)
+                frame_index += 1
+                if len(samples) >= 301:
+                    break
+        capture.release()
+    finally:
+        if temp_path and os.path.exists(temp_path):
+            os.unlink(temp_path)
+    detected_count = sum(1 for item in samples if item["face_detected"])
+    features = {
+        "duration_seconds": round(duration, 3),
+        "sampled_frames": len(samples),
+        "face_detected_frames": detected_count,
+        "face_detection_fraction": round(detected_count / len(samples), 4) if samples else 0,
+        "samples": samples,
+        "interpretation": "Time-indexed visual geometry only; not emotion, intent, honesty, or deception."
+    }
+    record_id = _save_observation("video_face_geometry", features, duration, q.get("source_name", "video upload"))
+    return {"ok": True, "record_id": record_id, "features": features,
+            "limitations": "Video frame geometry is sensitive to camera, pose, lighting, occlusion and sampling. It does not establish emotion, honesty, or deception."}
+
 def _wav_samples(raw):
     with wave.open(io.BytesIO(raw), "rb") as wav:
         channels, width, rate, count = wav.getnchannels(), wav.getsampwidth(), wav.getframerate(), wav.getnframes()
