@@ -1,1 +1,38 @@
-{"$schema":"https://schema.tauri.app/config/2","productName":"YAMOTO DECEPTION LAB","version":"0.2.0","identifier":"com.yamoto.deceptionlab","build":{"beforeDevCommand":"npm run dev","devUrl":"http://127.0.0.1:1420","beforeBuildCommand":"npm run build","frontendDist":"../dist"},"app":{"windows":[{"title":"YAMOTO DECEPTION LAB","width":1280,"height":820,"minWidth":900,"minHeight":650}],"security":{"csp":"default-src 'self'; img-src 'self' asset: data:; media-src 'self' blob:; style-src 'self' 'unsafe-inline'; connect-src ipc: http://ipc.localhost"}},"bundle":{"active":true,"targets":["nsis"],"resources":{"../engine/dist/yamoto-engine.exe":"yamoto-engine.exe"}}}
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "YAMOTO DECEPTION LAB",
+  "version": "0.2.0",
+  "identifier": "com.yamoto.deceptionlab",
+  "build": {
+    "beforeDevCommand": "npm run dev",
+    "devUrl": "http://127.0.0.1:1420",
+    "beforeBuildCommand": "npm run build",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "YAMOTO DECEPTION LAB",
+        "width": 1280,
+        "height": 820,
+        "minWidth": 900,
+        "minHeight": 650
+      }
+    ],
+    "security": {
+      "csp": "default-src 'self'; img-src 'self' asset: data:; media-src 'self' blob:; style-src 'self' 'unsafe-inline'; connect-src ipc: http://ipc.localhost"
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": [
+      "nsis"
+    ],
+    "resources": {
+      "../engine/dist/yamoto-engine.exe": "yamoto-engine.exe"
+    },
+    "icon": [
+      "icons/icon.ico"
+    ]
+  }
+}

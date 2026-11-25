@@ -126,6 +126,7 @@ def analyze_video(q):
         raise RuntimeError("MediaPipe/OpenCV is not installed in this build.") from exc
     import tempfile
     temp_path = None
+    capture = None
     try:
         with tempfile.NamedTemporaryFile(suffix=".video", delete=False) as temp:
             temp.write(raw)
@@ -170,8 +171,9 @@ def analyze_video(q):
                 frame_index += 1
                 if len(samples) >= 301:
                     break
-        capture.release()
     finally:
+        if capture is not None:
+            capture.release()
         if temp_path and os.path.exists(temp_path):
             os.unlink(temp_path)
     detected_count = sum(1 for item in samples if item["face_detected"])
@@ -265,6 +267,8 @@ def handle(q):
             return {"ok": True, **counts, "model_status": "NOT TRAINED"}
     if action == "analyze_frame":
         return analyze_frame(q)
+    if action == "analyze_video":
+        return analyze_video(q)
     if action == "analyze_audio":
         return analyze_audio(q)
     if action in ("create_dataset", "create_experiment"):

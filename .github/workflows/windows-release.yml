@@ -21,11 +21,25 @@ jobs:
       - run: npm install
       - run: python -m pip install -r engine/requirements.txt pyinstaller pytest
       - run: npm run build
-      - run: pyinstaller --onefile --clean --collect-all mediapipe --collect-all cv2 --collect-all numpy --distpath engine/dist --name yamoto-engine engine/yamoto_engine.py
-      - run: python -m pytest tests -q
+      - name: Package local Python engine and multimodal dependencies
+        run: pyinstaller --onefile --clean --collect-all mediapipe --collect-all cv2 --collect-all numpy --distpath engine/dist --name yamoto-engine engine/yamoto_engine.py
+      - name: Smoke-test packaged engine
+        shell: pwsh
+        run: |
+          $result = '{"action":"health"}' | ./engine/dist/yamoto-engine.exe
+          $health = $result | ConvertFrom-Json
+          if (-not $health.ok -or $health.database -ne 'READY') { throw "Packaged engine health check failed: $result" }
+          if ($health.media_features -ne 'READY') { throw "Packaged MediaPipe/OpenCV dependencies are missing: $result" }
+      - name: Run Python engine tests
+        run: python -m pytest tests -q
       - name: Generate Windows application icon
         shell: pwsh
         run: ./.github/scripts/create-windows-icon.ps1
+      - name: Verify Windows icon
+        shell: pwsh
+        run: |
+          if (-not (Test-Path "src-tauri/icons/icon.ico")) { throw "Windows icon was not generated." }
+          if ((Get-Item "src-tauri/icons/icon.ico").Length -lt 100) { throw "Windows icon file is invalid or empty." }
       - name: Build installer
         run: npm run tauri -- build --bundles nsis
       - uses: actions/upload-artifact@v4

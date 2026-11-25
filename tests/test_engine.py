@@ -42,6 +42,11 @@ def test_audio_signal_measurement_and_persistence(tmp_path):
     records = call(tmp_path, "list_sessions")["items"]
     assert records[0]["kind"] == "audio_signal"
 
+def test_video_action_is_registered_and_rejects_invalid_container(tmp_path):
+    result = call(tmp_path, "analyze_video", data=base64.b64encode(b"not a video").decode("ascii"))
+    assert result["ok"] is False
+    assert "error" in result
+
 def test_invalid_media_rejected(tmp_path):
     result = call(tmp_path, "analyze_audio", data="not-base64")
     assert result["ok"] is False
