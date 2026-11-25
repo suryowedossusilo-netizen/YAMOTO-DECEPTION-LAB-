@@ -8,7 +8,7 @@ A Windows-first, local-first desktop workspace for structured multimodal behavio
 - React + TypeScript + Vite desktop interface and Tauri 2 Windows shell.
 - Local Python JSON engine with SQLite persistence in per-user application data.
 - Dataset and experiment registry.
-- Opt-in camera preview and single-frame MediaPipe Face Mesh geometry extraction.
+- Opt-in camera preview, single-frame MediaPipe Face Mesh geometry extraction, and sampled video-frame geometry extraction (approximately one frame per second, up to five minutes).
 - WAV signal measurements: duration, RMS amplitude, peak, zero-crossing rate, and spectral centroid.
 - Local observations are stored in SQLite; raw media is processed in memory and is not saved by the engine.
 - Media features are measurements only. No emotion, personality, intent, honesty, or deception classifier is present.
