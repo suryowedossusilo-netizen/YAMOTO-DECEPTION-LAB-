@@ -16,7 +16,8 @@ jobs:
           python-version: '3.11'
       - uses: dtolnay/rust-toolchain@stable
       - run: npm install
-      - run: python -m pip install pytest
+      - run: python -m pip install pyinstaller pytest
+      - run: pyinstaller --onefile --name yamoto-engine engine/yamoto_engine.py
       - run: npm run build
       - run: python -m pytest tests -q
       - name: Build installer
