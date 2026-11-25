@@ -1,0 +1,2 @@
+# AI and scientific limitations
+This version has no trained or validated deception model. Its model status must remain NOT TRAINED. The current engine stores research metadata only. Behavioral signals are context-dependent and cannot establish deception. Future model work requires a documented construct, consented and licensed labels, representative data, participant-independent train/validation/test splits, calibration, uncertainty reporting, bias analysis, and independent replication.
